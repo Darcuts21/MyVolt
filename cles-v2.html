@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clés v2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f5f5f7;--surface:#fff;--surface2:#f5f5f7;--surface3:#e8e8ed;
+    --border:rgba(0,0,0,0.09);--accent:#0071e3;--danger:#ff3b30;--warn:#ff9500;
+    --green:#34c759;--text:#1d1d1f;--text2:#6e6e73;--text3:#aeaeb2;
+    --radius:14px;--radius-sm:10px;--shadow:0 2px 16px rgba(0,0,0,0.07);
+  }
+  [data-theme="dark"] {
+    --bg:#1c1c1e;--surface:#2c2c2e;--surface2:#3a3a3c;--surface3:#48484a;
+    --border:rgba(255,255,255,0.1);--text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --shadow:0 2px 20px rgba(0,0,0,0.4);
+  }
+  body { background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s; }
+
+  /* AUTH */
+  #authScreen { min-height:100vh;display:none;align-items:center;justify-content:center;padding:24px; }
+  #authScreen.active { display:flex; }
+  .auth-card { background:var(--surface);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.12);border:1px solid var(--border); }
+  .auth-logo { text-align:center;font-size:2.6rem;margin-bottom:6px; }
+  .auth-title { text-align:center;font-size:1.5rem;font-weight:700;margin-bottom:4px; }
+  .auth-sub { text-align:center;font-size:0.84rem;color:var(--text2);margin-bottom:28px;line-height:1.5; }
+  .auth-tabs { display:flex;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:24px; }
+  .auth-tab { flex:1;text-align:center;padding:8px;border-radius:8px;font-size:0.87rem;font-weight:600;font-family:inherit;border:none;background:none;cursor:pointer;color:var(--text2);transition:all .2s; }
+  .auth-tab.active { background:var(--surface);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,0.1); }
+  .field { margin-bottom:13px; }
+  .field label { display:block;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:5px; }
+  .field input { width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:0.92rem;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s; }
+  .field input:focus { border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.1); }
+  .field input::placeholder { color:var(--text3); }
+  .err-box { background:rgba(255,59,48,.07);border:1px solid rgba(255,59,48,.2);border-radius:9px;padding:10px 14px;font-size:0.82rem;color:var(--danger);margin-bottom:13px;display:none; }
+  .err-box.show { display:block; }
+  .info-box { background:rgba(0,113,227,.07);border:1px solid rgba(0,113,227,.18);border-radius:9px;padding:10px 14px;font-size:0.82rem;color:var(--accent);margin-bottom:13px;display:none; }
+  .info-box.show { display:block; }
+  .btn-full { width:100%;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:13px;font-size:0.93rem;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px; }
+  .btn-full:hover { opacity:0.88; }
+  .btn-full:active { transform:scale(0.98); }
+  .btn-full:disabled { opacity:0.5;pointer-events:none; }
+
+  /* APP */
+  #appScreen { display:none; }
+  #appScreen.active { display:block; }
+  .wrapper { max-width:720px;margin:0 auto;padding:48px 24px 100px; }
+
+  .topbar { display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px; }
+  .topbar h1 { font-size:1.9rem;font-weight:700;letter-spacing:-0.4px; }
+  .topbar p { font-size:0.82rem;color:var(--text2);margin-top:2px; }
+  .topbar-right { display:flex;align-items:center;gap:8px; }
+  .user-pill { display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 13px 5px 8px;font-size:0.79rem;color:var(--text2);box-shadow:var(--shadow); }
+  .user-dot { width:22px;height:22px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;font-weight:700; }
+  .icon-round { width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:all .15s;font-size:15px;text-decoration:none; }
+  .icon-round:hover { border-color:var(--accent);color:var(--accent); }
+  .logout-btn { background:none;border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:0.79rem;color:var(--text2);font-family:inherit;cursor:pointer;transition:all .15s; }
+  .logout-btn:hover { border-color:var(--danger);color:var(--danger); }
+
+  .nav-tabs { display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:22px;box-shadow:var(--shadow);gap:2px; }
+  .nav-tab { flex:1;text-align:center;padding:9px 12px;border-radius:10px;font-size:0.83rem;font-weight:600;font-family:inherit;border:none;background:none;cursor:pointer;color:var(--text2);transition:all .2s; }
+  .nav-tab.active { background:var(--accent);color:white; }
+  .nav-tab:not(.active):hover { background:var(--surface2);color:var(--text); }
+
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  .search-wrap { position:relative;margin-bottom:16px; }
+  .search-wrap svg { position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none; }
+  .search-wrap input { width:100%;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px 12px 40px;font-size:0.92rem;color:var(--text);outline:none;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s;font-family:inherit; }
+  .search-wrap input::placeholder { color:var(--text3); }
+  .search-wrap input:focus { border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.12); }
+
+  .filters { display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap; }
+  .filter-btn { padding:5px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:0.79rem;font-family:inherit;cursor:pointer;transition:all .15s;font-weight:500; }
+  .filter-btn:hover { background:var(--surface3); }
+  .filter-btn.active { background:var(--text);border-color:var(--text);color:white; }
+
+  .alert-banner { background:rgba(255,149,0,.1);border:1px solid rgba(255,149,0,.3);border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:14px;font-size:0.82rem;color:var(--warn);display:none;cursor:pointer; }
+  .alert-banner.show { display:flex;align-items:center;gap:8px; }
+
+  .add-card { background:var(--surface);border-radius:var(--radius);padding:20px 22px;margin-bottom:20px;box-shadow:var(--shadow);border:1px solid var(--border); }
+  .card-label { font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text2);margin-bottom:14px; }
+  .form-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+  .form-grid .full { grid-column:1/-1; }
+  .input-group { display:flex;flex-direction:column;gap:4px; }
+  .input-group label { font-size:0.69rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px; }
+  .input-group input,.input-group select,.input-group textarea { background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-size:0.88rem;color:var(--text);font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;-webkit-appearance:none; }
+  .input-group textarea { resize:vertical;min-height:68px; }
+  .input-group input::placeholder,.input-group textarea::placeholder { color:var(--text3); }
+  .input-group input:focus,.input-group select:focus,.input-group textarea:focus { border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,113,227,.1); }
+  .pass-wrap { position:relative; }
+  .pass-wrap input { padding-right:72px; }
+  .icon-btn { position:absolute;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:6px;display:flex;align-items:center;border-radius:6px;transition:color .15s; }
+  .icon-btn:hover { color:var(--text2); }
+  .icon-btn.vis-btn { right:34px; }
+  .icon-btn.gen-btn { right:4px; }
+  .strength-row { display:flex;gap:4px;margin-top:5px; }
+  .strength-dot { flex:1;height:3px;border-radius:2px;background:var(--surface3);transition:background .3s; }
+  .form-footer { display:flex;justify-content:flex-end;margin-top:13px; }
+  .btn-add { background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);padding:10px 22px;font-size:0.87rem;font-weight:600;font-family:inherit;cursor:pointer;transition:opacity .15s,transform .1s;display:flex;align-items:center;gap:6px; }
+  .btn-add:hover { opacity:0.88; }
+  .btn-add:active { transform:scale(0.98); }
+
+  .section-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:10px; }
+  .count-label { font-size:0.75rem;color:var(--text3); }
+  .entries-group { background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border); }
+  .entry-row { display:flex;align-items:center;gap:12px;padding:12px 15px;border-bottom:1px solid var(--border);transition:background .1s;animation:fadeIn .2s ease;cursor:pointer; }
+  .entry-row:last-child { border-bottom:none; }
+  .entry-row:hover { background:var(--surface2); }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)} }
+
+  .entry-favicon { width:36px;height:36px;border-radius:9px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;overflow:hidden; }
+  .entry-favicon img { width:22px;height:22px;object-fit:contain; }
+  .entry-body { flex:1;min-width:0; }
+  .entry-site { font-size:0.89rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px; }
+  .weak-badge { font-size:0.58rem;background:rgba(255,59,48,.12);color:var(--danger);border-radius:4px;padding:1px 5px;font-weight:700;text-transform:uppercase;flex-shrink:0; }
+  .note-badge { font-size:0.58rem;background:rgba(0,113,227,.1);color:var(--accent);border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0; }
+  .entry-meta { font-size:0.75rem;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .entry-pass { font-size:0.79rem;color:var(--text3);letter-spacing:2px;min-width:76px;text-align:right;flex-shrink:0; }
+  .entry-pass.show { color:var(--text2);letter-spacing:0;font-size:0.75rem; }
+  .entry-actions { display:flex;gap:1px;flex-shrink:0; }
+  .act-btn { width:30px;height:30px;border-radius:7px;border:none;background:none;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s; }
+  .act-btn:hover { background:var(--surface3);color:var(--text2); }
+  .act-btn.del:hover { color:var(--danger);background:rgba(255,59,48,.08); }
+
+  /* MODAL */
+  .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);z-index:100;display:none;align-items:center;justify-content:center;padding:24px; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--surface);border-radius:20px;padding:26px;width:100%;max-width:450px;box-shadow:0 20px 60px rgba(0,0,0,0.2);border:1px solid var(--border);animation:modalIn .18s ease; }
+  @keyframes modalIn { from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)} }
+  .modal-header { display:flex;align-items:center;gap:12px;margin-bottom:18px; }
+  .modal-favicon { width:42px;height:42px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0; }
+  .modal-favicon img { width:26px;height:26px;object-fit:contain; }
+  .modal-title { font-size:1.15rem;font-weight:700; }
+  .modal-sub { font-size:0.78rem;color:var(--text2);margin-top:2px; }
+  .modal-close { margin-left:auto;width:28px;height:28px;border-radius:50%;border:none;background:var(--surface2);color:var(--text2);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center; }
+  .modal-section { margin-bottom:14px; }
+  .modal-label { font-size:0.66rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:5px; }
+  .modal-value { background:var(--surface2);border-radius:var(--radius-sm);padding:10px 13px;font-size:0.88rem;color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:8px; }
+  .modal-value.mono { font-family:monospace;letter-spacing:1px; }
+  .modal-btns-row { display:flex;gap:4px; }
+  .copy-inline { background:none;border:none;cursor:pointer;color:var(--text3);padding:3px;border-radius:4px;transition:color .15s;display:flex;align-items:center; }
+  .copy-inline:hover { color:var(--accent); }
+  .modal-note { background:var(--surface2);border-radius:var(--radius-sm);padding:10px 13px;font-size:0.84rem;color:var(--text2);line-height:1.5;white-space:pre-wrap; }
+  .modal-actions { display:flex;gap:8px;margin-top:18px; }
+  .modal-btn { flex:1;padding:10px;border-radius:var(--radius-sm);font-size:0.84rem;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:all .15s; }
+  .modal-btn:hover { background:var(--surface3);color:var(--text); }
+  .modal-btn.danger { background:rgba(255,59,48,.08);border-color:rgba(255,59,48,.2);color:var(--danger); }
+  .modal-btn.danger:hover { background:rgba(255,59,48,.15); }
+
+  /* EMAIL */
+  .email-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px; }
+  .email-card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);transition:border-color .15s,transform .15s;animation:fadeIn .2s ease; }
+  .email-card:hover { border-color:var(--accent);transform:translateY(-2px); }
+  .email-card-top { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
+  .email-avatar { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0; }
+  .email-name { font-size:0.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .email-addr { font-size:0.74rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+  .email-tags { display:flex;gap:4px;flex-wrap:wrap; }
+  .email-tag { font-size:0.64rem;padding:2px 7px;border-radius:999px;font-weight:600; }
+  .email-actions-row { display:flex;gap:6px;margin-top:10px; }
+  .email-btn { flex:1;padding:6px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.74rem;font-family:inherit;cursor:pointer;transition:all .15s;font-weight:500; }
+  .email-btn:hover { background:var(--surface3);color:var(--text); }
+  .email-btn.danger:hover { color:var(--danger);border-color:rgba(255,59,48,.3); }
+
+  .empty { background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);text-align:center;padding:48px 24px;color:var(--text3); }
+  .empty p { font-size:0.84rem;margin-top:10px; }
+  .spinner { width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .toast { position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(29,29,31,.92);backdrop-filter:blur(16px);color:white;border-radius:999px;padding:9px 20px;font-size:0.81rem;font-weight:500;font-family:inherit;transition:transform .28s cubic-bezier(.34,1.56,.64,1),opacity .28s;z-index:999;white-space:nowrap;opacity:0;pointer-events:none; }
+  .toast.show { transform:translateX(-50%) translateY(0);opacity:1; }
+
+  @media(max-width:560px) {
+    .form-grid,.email-grid{grid-template-columns:1fr}
+    .form-grid .full{grid-column:1}
+    .entry-pass{display:none}
+    .auth-card{padding:28px 20px}
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">🔑</div>
+    <div class="auth-title">Clés</div>
+    <div class="auth-sub">Mots de passe & emails, partout avec toi.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Inscription</button>
+    </div>
+    <div class="err-box" id="authErr"></div>
+    <div class="info-box" id="authInfo"></div>
+    <div class="field"><label>Identifiant</label><input type="text" id="authUser" placeholder="MonIdentifiant" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <div class="field"><label>Mot de passe du compte</label><input type="password" id="authPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuth()"></div>
+    <button class="btn-full" id="btnAuth" onclick="submitAuth()">Se connecter</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+<div class="wrapper">
+  <div class="topbar">
+    <div><h1>🔑 Clés</h1><p>Mots de passe & emails centralisés.</p></div>
+    <div class="topbar-right">
+      <div class="user-pill"><div class="user-dot" id="userDot">?</div><span id="userLabel">—</span></div>
+      <button class="icon-round" id="themeBtn" onclick="toggleTheme()" title="Mode sombre">🌙</button>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPanel('passwords',this)">🔐 Mots de passe</button>
+    <button class="nav-tab" onclick="switchPanel('emails',this)">📧 Emails</button>
+  </div>
+
+  <!-- PASSWORDS PANEL -->
+  <div class="tab-panel active" id="panel-passwords">
+    <div class="alert-banner" id="weakAlert" onclick="filterWeakOnly()">
+      ⚠️ <span id="weakAlertText"></span> — Clique pour les voir
+    </div>
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="Rechercher par site, identifiant ou email…" oninput="renderPasswords()">
+    </div>
+    <div class="filters" id="filterBar"></div>
+    <div class="add-card">
+      <div class="card-label">Nouvelle entrée</div>
+      <div class="form-grid">
+        <div class="input-group"><label>Site / App</label><input type="text" id="iSite" placeholder="Gmail, Netflix…"></div>
+        <div class="input-group"><label>Catégorie</label>
+          <select id="iCat">
+            <option value="Réseaux sociaux">📱 Réseaux sociaux</option>
+            <option value="Email">📧 Email</option>
+            <option value="Banque">🏦 Banque</option>
+            <option value="Shopping">🛒 Shopping</option>
+            <option value="Streaming">🎬 Streaming</option>
+            <option value="Travail">💼 Travail</option>
+            <option value="Autre">🔗 Autre</option>
+          </select>
+        </div>
+        <div class="input-group full"><label>Identifiant / Email</label><input type="text" id="iUser" placeholder="email@exemple.com"></div>
+        <div class="input-group full"><label>Mot de passe</label>
+          <div class="pass-wrap">
+            <input type="password" id="iPass" placeholder="Mot de passe…" oninput="updateStrength(this.value)">
+            <button class="icon-btn vis-btn" onclick="toggleFormVis()" tabindex="-1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button class="icon-btn gen-btn" onclick="generatePwd()" tabindex="-1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+          </div>
+          <div class="strength-row"><div class="strength-dot" id="s1"></div><div class="strength-dot" id="s2"></div><div class="strength-dot" id="s3"></div><div class="strength-dot" id="s4"></div><div class="strength-dot" id="s5"></div></div>
+        </div>
+        <div class="input-group full"><label>Note (optionnel)</label><textarea id="iNote" placeholder="Compte premium, date d'expiration, infos utiles…"></textarea></div>
+      </div>
+      <div class="form-footer"><button class="btn-add" id="btnAdd" onclick="addEntry()">Ajouter</button></div>
+    </div>
+    <div class="section-header"><span class="card-label">Mots de passe</span><span class="count-label" id="countLabel"></span></div>
+    <div id="listWrap"></div>
+  </div>
+
+  <!-- EMAILS PANEL -->
+  <div class="tab-panel" id="panel-emails">
+    <div class="add-card">
+      <div class="card-label">Ajouter un email</div>
+      <div class="form-grid">
+        <div class="input-group"><label>Nom / Prénom</label><input type="text" id="eName" placeholder="Jean Dupont"></div>
+        <div class="input-group"><label>Adresse email</label><input type="email" id="eAddr" placeholder="jean@exemple.com"></div>
+        <div class="input-group"><label>Étiquette</label>
+          <select id="eTag"><option value="Personnel">Personnel</option><option value="Travail">Travail</option><option value="Famille">Famille</option><option value="Autre">Autre</option></select>
+        </div>
+        <div class="input-group"><label>Note</label><input type="text" id="eNote" placeholder="Ex: compte principal"></div>
+      </div>
+      <div class="form-footer"><button class="btn-add" onclick="addEmail()">Ajouter</button></div>
+    </div>
+    <div class="section-header"><span class="card-label">Mes emails</span><span class="count-label" id="emailCount"></span></div>
+    <div id="emailWrap"></div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-favicon" id="modalFavicon"></div>
+      <div><div class="modal-title" id="modalTitle"></div><div class="modal-sub" id="modalSub"></div></div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Identifiant / Email</div>
+      <div class="modal-value"><span id="modalUser"></span>
+        <button class="copy-inline" onclick="copyText(document.getElementById('modalUser').textContent)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-label">Mot de passe</div>
+      <div class="modal-value mono"><span id="modalPass">••••••••</span>
+        <div class="modal-btns-row">
+          <button class="copy-inline" onclick="toggleModalPass()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="copy-inline" onclick="copyText(currentModalEntry&&currentModalEntry.password)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-section" id="modalNoteSection" style="display:none">
+      <div class="modal-label">Note</div>
+      <div class="modal-note" id="modalNote"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn danger" id="modalDeleteBtn">🗑️ Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EYE=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const EYE_OFF=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+const COPY=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const TRASH=`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+const ICONS={'Réseaux sociaux':'📱','Email':'📧','Banque':'🏦','Shopping':'🛒','Streaming':'🎬','Travail':'💼','Autre':'🔗'};
+const TAG_COLORS={'Personnel':'#0071e3','Travail':'#34c759','Famille':'#ff9500','Autre':'#aeaeb2'};
+const AV_COLORS=['#0071e3','#34c759','#ff9500','#ff3b30','#af52de','#5ac8fa','#ff2d55'];
+
+let entries=[],emails=[],filter='Tout',weakOnly=false,currentUser=null,authMode='login',currentModalEntry=null,modalPassVis=false;
+
+async function hashPwd(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}
+function lsSet(k,v){localStorage.setItem(k,JSON.stringify(v));}
+
+function getStrength(v){let s=0;if(v.length>=8)s++;if(v.length>=12)s++;if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^a-zA-Z0-9]/.test(v))s++;return s;}
+function isWeak(p){return getStrength(p)<=2;}
+
+function faviconUrl(site){
+  const map={gmail:'google.com',google:'google.com',youtube:'youtube.com',facebook:'facebook.com',instagram:'instagram.com',twitter:'twitter.com',netflix:'netflix.com',amazon:'amazon.com',paypal:'paypal.com',github:'github.com',discord:'discord.com',twitch:'twitch.tv',spotify:'spotify.com',linkedin:'linkedin.com',snapchat:'snapchat.com',tiktok:'tiktok.com',whatsapp:'whatsapp.com',outlook:'outlook.com',apple:'apple.com',microsoft:'microsoft.com',steam:'steampowered.com'};
+  const c=site.toLowerCase().replace(/\s+/g,'');
+  const d=map[c]||(c.includes('.')?c:c+'.com');
+  return`https://www.google.com/s2/favicons?domain=${d}&sz=32`;
+}
+function faviconHtml(site,fallback){
+  return`<img src="${faviconUrl(site)}" style="width:22px;height:22px;object-fit:contain" onerror="this.style.display='none';this.nextSibling.style.display='inline'"><span style="display:none;font-size:16px">${fallback}</span>`;
+}
+function faviconHtmlLg(site,fallback){
+  return`<img src="${faviconUrl(site)}" style="width:26px;height:26px;object-fit:contain" onerror="this.style.display='none';this.nextSibling.style.display='inline'"><span style="display:none;font-size:20px">${fallback}</span>`;
+}
+
+// AUTH
+function switchTab(m){authMode=m;document.getElementById('tabLogin').classList.toggle('active',m==='login');document.getElementById('tabRegister').classList.toggle('active',m==='register');document.getElementById('btnAuth').textContent=m==='login'?'Se connecter':'Créer mon compte';['authErr','authInfo'].forEach(id=>document.getElementById(id).classList.remove('show'));}
+
+async function submitAuth(){
+  const u=document.getElementById('authUser').value.trim(),p=document.getElementById('authPass').value;
+  ['authErr','authInfo'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  if(!u||!p){showErr('authErr','Remplis tous les champs');return;}
+  const btn=document.getElementById('btnAuth');btn.innerHTML='<div class="spinner"></div>';btn.disabled=true;
+  try{
+    const h=await hashPwd(p),users=lsGet('cles2_users')||{};
+    if(authMode==='register'){
+      if(users[u]){showErr('authErr','Identifiant déjà pris');return;}
+      users[u]={h};lsSet('cles2_users',users);
+      document.getElementById('authInfo').textContent='✅ Compte créé ! Connecte-toi.';document.getElementById('authInfo').classList.add('show');
+      switchTab('login');document.getElementById('authPass').value='';return;
+    }
+    if(!users[u]){showErr('authErr','Identifiant introuvable');return;}
+    if(users[u].h!==h){showErr('authErr','Mot de passe incorrect');return;}
+    currentUser=u;lsSet('cles2_session',{u,h});enterApp(u);
+  }catch(e){showErr('authErr','Erreur: '+e.message);}
+  finally{btn.textContent=authMode==='login'?'Se connecter':'Créer mon compte';btn.disabled=false;}
+}
+
+function enterApp(u){
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  document.getElementById('userDot').textContent=u[0].toUpperCase();
+  document.getElementById('userLabel').textContent=u;
+  entries=lsGet('cles2_e_'+u)||[];emails=lsGet('cles2_m_'+u)||[];
+  applyTheme();checkWeak();updateFilters();renderPasswords();renderEmails();
+}
+
+function logout(){
+  currentUser=null;entries=[];emails=[];localStorage.removeItem('cles2_session');
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+  document.getElementById('authUser').value='';document.getElementById('authPass').value='';
+}
+
+function save(){lsSet('cles2_e_'+currentUser,entries);lsSet('cles2_m_'+currentUser,emails);}
+
+// THEME
+function toggleTheme(){const d=document.documentElement.getAttribute('data-theme')==='dark';const n=d?'light':'dark';document.documentElement.setAttribute('data-theme',n);document.getElementById('themeBtn').textContent=n==='dark'?'☀️':'🌙';lsSet('cles2_theme',n);}
+function applyTheme(){const t=lsGet('cles2_theme')||'light';document.documentElement.setAttribute('data-theme',t);document.getElementById('themeBtn').textContent=t==='dark'?'☀️':'🌙';}
+
+// PANELS
+function switchPanel(n,btn){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));document.getElementById('panel-'+n).classList.add('active');btn.classList.add('active');}
+
+// WEAK
+function checkWeak(){const w=entries.filter(e=>isWeak(e.password));const b=document.getElementById('weakAlert');if(w.length){document.getElementById('weakAlertText').textContent=`${w.length} mot${w.length>1?'s':''} de passe faible${w.length>1?'s':''}`;b.classList.add('show');}else{b.classList.remove('show');weakOnly=false;}}
+function filterWeakOnly(){weakOnly=!weakOnly;filter='Tout';updateFilters();renderPasswords();}
+
+// ENTRIES
+function addEntry(){
+  const site=document.getElementById('iSite').value.trim(),username=document.getElementById('iUser').value.trim(),password=document.getElementById('iPass').value,category=document.getElementById('iCat').value,note=document.getElementById('iNote').value.trim();
+  if(!site||!password){showToast('Site et mot de passe requis');return;}
+  entries.unshift({id:Date.now(),site,username,password,category,note,vis:false});
+  ['iSite','iUser','iPass','iNote'].forEach(id=>document.getElementById(id).value='');
+  updateStrength('');save();checkWeak();updateFilters();renderPasswords();showToast('✅ Entrée ajoutée');
+}
+
+function deleteEntry(id){entries=entries.filter(e=>e.id!==id);save();checkWeak();updateFilters();renderPasswords();closeModalDirect();showToast('Supprimé');}
+function toggleVis(id,ev){ev.stopPropagation();const e=entries.find(e=>e.id===id);if(e){e.vis=!e.vis;renderPasswords();}}
+function copyPass(id,ev){ev.stopPropagation();const e=entries.find(e=>e.id===id);if(e)copyText(e.password);}
+
+function getFiltered(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  return entries.filter(e=>{
+    const mc=filter==='Tout'||e.category===filter;
+    const mq=!q||e.site.toLowerCase().includes(q)||(e.username||'').toLowerCase().includes(q);
+    const mw=!weakOnly||isWeak(e.password);
+    return mc&&mq&&mw;
+  });
+}
+
+function renderPasswords(){
+  const list=getFiltered(),wrap=document.getElementById('listWrap');
+  document.getElementById('countLabel').textContent=list.length+(list.length>1?' entrées':' entrée');
+  if(!list.length){wrap.innerHTML=`<div class="empty"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><p>Aucune entrée</p></div>`;return;}
+  wrap.innerHTML=`<div class="entries-group">${list.map(e=>`
+    <div class="entry-row" onclick="openModal(${e.id})">
+      <div class="entry-favicon">${faviconHtml(e.site,ICONS[e.category]||'🔗')}</div>
+      <div class="entry-body">
+        <div class="entry-site">${esc(e.site)}${isWeak(e.password)?'<span class="weak-badge">Faible</span>':''}${e.note?'<span class="note-badge">Note</span>':''}</div>
+        <div class="entry-meta">${esc(e.username)||'—'}</div>
+      </div>
+      <div class="entry-pass ${e.vis?'show':''}">${e.vis?esc(e.password):'••••••••'}</div>
+      <div class="entry-actions">
+        <button class="act-btn" onclick="toggleVis(${e.id},event)">${e.vis?EYE_OFF:EYE}</button>
+        <button class="act-btn" onclick="copyPass(${e.id},event)">${COPY}</button>
+        <button class="act-btn del" onclick="event.stopPropagation();deleteEntry(${e.id})">${TRASH}</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function updateFilters(){
+  const cats=['Tout',...new Set(entries.map(e=>e.category))];
+  document.getElementById('filterBar').innerHTML=cats.map(c=>`<button class="filter-btn ${c===filter&&!weakOnly?'active':''}" onclick="setFilter('${c}',this)">${c}</button>`).join('');
+}
+function setFilter(c,btn){filter=c;weakOnly=false;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPasswords();}
+
+// MODAL
+function openModal(id){
+  const e=entries.find(e=>e.id===id);if(!e)return;
+  currentModalEntry=e;modalPassVis=false;
+  document.getElementById('modalFavicon').innerHTML=faviconHtmlLg(e.site,ICONS[e.category]||'🔗');
+  document.getElementById('modalTitle').textContent=e.site;
+  document.getElementById('modalSub').textContent=e.category;
+  document.getElementById('modalUser').textContent=e.username||'—';
+  document.getElementById('modalPass').textContent='••••••••';
+  document.getElementById('modalPass').style.letterSpacing='2px';
+  const ns=document.getElementById('modalNoteSection');
+  if(e.note){document.getElementById('modalNote').textContent=e.note;ns.style.display='block';}else{ns.style.display='none';}
+  document.getElementById('modalDeleteBtn').onclick=()=>deleteEntry(e.id);
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function toggleModalPass(){if(!currentModalEntry)return;modalPassVis=!modalPassVis;const el=document.getElementById('modalPass');el.textContent=modalPassVis?currentModalEntry.password:'••••••••';el.style.letterSpacing=modalPassVis?'0':'2px';}
+function closeModal(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();}
+function closeModalDirect(){document.getElementById('modalOverlay').classList.remove('show');currentModalEntry=null;}
+
+// EMAILS
+function addEmail(){
+  const name=document.getElementById('eName').value.trim(),addr=document.getElementById('eAddr').value.trim(),tag=document.getElementById('eTag').value,note=document.getElementById('eNote').value.trim();
+  if(!name||!addr){showToast('Nom et email requis');return;}
+  if(!addr.includes('@')){showToast('Email invalide');return;}
+  emails.unshift({id:Date.now(),name,addr,tag,note,color:AV_COLORS[emails.length%AV_COLORS.length]});
+  ['eName','eAddr','eNote'].forEach(id=>document.getElementById(id).value='');
+  save();renderEmails();showToast('✅ Email ajouté');
+}
+function deleteEmail(id){emails=emails.filter(e=>e.id!==id);save();renderEmails();showToast('Supprimé');}
+function renderEmails(){
+  const wrap=document.getElementById('emailWrap');
+  document.getElementById('emailCount').textContent=emails.length+(emails.length>1?' emails':' email');
+  if(!emails.length){wrap.innerHTML=`<div class="empty"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><p>Aucun email enregistré</p></div>`;return;}
+  wrap.innerHTML=`<div class="email-grid">${emails.map(e=>`
+    <div class="email-card">
+      <div class="email-card-top">
+        <div class="email-avatar" style="background:${e.color}">${e.name[0].toUpperCase()}</div>
+        <div style="min-width:0"><div class="email-name">${esc(e.name)}</div><div class="email-addr">${esc(e.addr)}</div></div>
+      </div>
+      <div class="email-tags">
+        <span class="email-tag" style="background:${TAG_COLORS[e.tag]||'#aeaeb2'}22;color:${TAG_COLORS[e.tag]||'#aeaeb2'}">${e.tag}</span>
+        ${e.note?`<span class="email-tag" style="background:var(--surface3);color:var(--text2)">${esc(e.note)}</span>`:''}
+      </div>
+      <div class="email-actions-row">
+        <button class="email-btn" onclick="copyText('${esc(e.addr)}')">📋 Copier</button>
+        <button class="email-btn" onclick="window.open('mailto:${esc(e.addr)}')">✉️ Écrire</button>
+        <button class="email-btn danger" onclick="deleteEmail(${e.id})">🗑️</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// UTILS
+function generatePwd(){const c='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';let p='';for(let i=0;i<16;i++)p+=c[Math.floor(Math.random()*c.length)];const inp=document.getElementById('iPass');inp.value=p;inp.type='text';updateStrength(p);showToast('⚡ Mot de passe généré');setTimeout(()=>{if(inp.type==='text')inp.type='password';},3000);}
+function updateStrength(v){const s=getStrength(v);const cols=['#ff3b30','#ff9500','#ffcc00','#34c759','#34c759'];for(let i=1;i<=5;i++)document.getElementById('s'+i).style.background=i<=s?cols[s-1]:'var(--surface3)';}
+function toggleFormVis(){const i=document.getElementById('iPass');i.type=i.type==='password'?'text':'password';}
+function copyText(t){if(!t)return;navigator.clipboard.writeText(t).then(()=>showToast('📋 Copié !'));}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showErr(id,msg){const e=document.getElementById(id);e.textContent=msg;e.classList.add('show');}
+let tt;function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400);}
+
+// INIT
+(function(){
+  applyTheme();
+  const s=lsGet('cles2_session');
+  if(s){const users=lsGet('cles2_users')||{};if(users[s.u]?.h===s.h){currentUser=s.u;enterApp(s.u);return;}}
+  document.getElementById('authScreen').classList.add('active');
+})();
+</script>
+</body>
+</html>
